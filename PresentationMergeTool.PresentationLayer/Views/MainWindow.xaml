@@ -1,0 +1,135 @@
+﻿<Window x:Class="PresentationMergeTool.PresentationLayer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PresentationMergeTool.PresentationLayer"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:command="http://www.galasoft.ch/mvvmlight"
+        xmlns:viewModels="clr-namespace:PresentationMergeTool.PresentationLayer.ViewModels"
+        xmlns:behaviors="clr-namespace:PresentationMergeTool.PresentationLayer.Behaviors"
+        xmlns:controls="clr-namespace:PresentationMergeTool.PresentationLayer.Controls"
+        xmlns:converter="clr-namespace:PresentationMergeTool.PresentationLayer.Converter"
+        xmlns:properties="clr-namespace:PresentationMergeTool.PresentationLayer.Properties"
+        mc:Ignorable="d" MinHeight="450" MinWidth="450" Icon="../Resources/App_icon.png"
+        Title="Presentation Merge Tool" Height="450" Width="800">
+
+    <i:Interaction.Behaviors>
+        <behaviors:WindowReceiveFilesBehavior 
+            FileDropReceptionArea="{Binding ElementName=DragAndDropReceptionArea}" />
+    </i:Interaction.Behaviors>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="/PresentationMergeTool;component/Styles/ButtonStyles.xaml" />
+                <ResourceDictionary
+                    Source="/PresentationMergeTool;component/Styles/DataGridStyles.xaml" />
+                <ResourceDictionary
+                    Source="/PresentationMergeTool;component/Styles/TextBlockStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <converter:DragEventArgsToDroppedFilesConverter x:Key="DragEventArgsToDroppedFilesConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F1" Command="{Binding InvertHelpAreaVisibilityCommand}"/>
+    </Window.InputBindings>
+
+    <Grid AllowDrop="True">
+        <i:Interaction.Triggers>
+            <i:EventTrigger EventName="Drop">
+                <command:EventToCommand Command="{Binding ProcessDropCommand}" PassEventArgsToCommand="True"
+                                        EventArgsConverter="{StaticResource DragEventArgsToDroppedFilesConverter}"/>
+            </i:EventTrigger>
+        </i:Interaction.Triggers>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="80" />
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <GroupBox Grid.Row="0" Header="{x:Static properties:Resources.GroupBox_Controls}" Margin="3">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource ControlButton}" Content="{x:Static properties:Resources.Btn_MergePresentations}"
+                        Command="{Binding SaveToPresentationCommand}" />
+            </StackPanel>
+        </GroupBox>
+
+        <DataGrid Margin="3" Grid.Row="1" Grid.Column="0" Name="PresentationItemsDataGrid"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True" AllowDrop="True" CellStyle="{StaticResource DataGridCellNoBorder}"
+                  ItemsSource="{Binding PresentationFiles, UpdateSourceTrigger= PropertyChanged}"
+                  SelectionMode="Single" VerticalContentAlignment="Center">
+
+            <i:Interaction.Behaviors>
+                <behaviors:DataGridItemDragNDropBehavior />
+            </i:Interaction.Behaviors>
+
+            <DataGrid.InputBindings>
+                <KeyBinding Command="{Binding DeleteSelectedItemCommand}" Key="Delete"
+                            CommandParameter="{Binding ElementName=PresentationItemsDataGrid, Path=SelectedItems}" />
+            </DataGrid.InputBindings>
+
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{x:Static properties:Resources.DataGridColumn_FileName}" Binding="{Binding Name}" MinWidth="150"
+                                    ElementStyle="{StaticResource DataGridTextColumn}" />
+                <DataGridTextColumn Header="{x:Static properties:Resources.DataGridColumn_FullPath}" Binding="{Binding FullPath}" Width="*" 
+                                    ElementStyle="{StaticResource DataGridTextColumn}" />
+            </DataGrid.Columns>
+
+        </DataGrid>
+
+
+        <Expander ExpandDirection="Left" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Margin="0,3,3,1"
+                  IsExpanded="{Binding IsHelpAreaExpanded, UpdateSourceTrigger=PropertyChanged}">
+            <Expander.HeaderTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{x:Static properties:Resources.Expander_HelpSection_Title}" Margin="0,3,0,3">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </DataTemplate>
+            </Expander.HeaderTemplate>
+            <GroupBox Header="{x:Static properties:Resources.Expander_HelpSection_Title}" Width="130">
+                <StackPanel Orientation="Vertical" x:Name="HelpItemsContainer" Width="120">
+                    <controls:HelpElementControl Header="{x:Static properties:Resources.HelpElement_HowRemoveItem}"
+                                                 ImageSource="../Resources/helper_delete.png" Margin="2" />
+                    <Separator Height="5" />
+                    <controls:HelpElementControl Header="{x:Static properties:Resources.HelpSection_ReorderItem}"
+                                                 ImageSource="../Resources/helper_move.png" Margin="2" />
+                </StackPanel>
+            </GroupBox>
+        </Expander>
+
+        <TextBlock Grid.Column="0" Grid.ColumnSpan="2" Padding="7,3" Grid.Row="2" VerticalAlignment="Center"
+                   Background="GhostWhite" Text="{Binding AppVersion}" />
+
+        <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="3" BorderThickness="3"
+                Background="White" CornerRadius="15" Margin="2" Visibility="Visible"
+                Name="DragAndDropReceptionArea">
+            <Border.BorderBrush>
+                <VisualBrush>
+                    <VisualBrush.Visual>
+                        <Rectangle StrokeDashArray="3 1" Stroke="#2756e5" StrokeThickness="3" RadiusX="15" RadiusY="15"
+                                   Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}"
+                                   Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}" />
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Border.BorderBrush>
+
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <TextBlock Text="{x:Static properties:Resources.DragNDropAreaText}"
+                           Style="{StaticResource DragNDropAreaText}" />
+                <Image Margin="0,15" Source="../Resources/drop_icon.png" Width="120" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
